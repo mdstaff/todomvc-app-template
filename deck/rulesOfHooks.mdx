@@ -1,0 +1,34 @@
+import {
+  FullScreenCode,
+  Main,
+  Section,
+  SectionInverted
+} from 'gatsby-mdx-theme'
+
+export default Main
+
+# Rules of Hooks #1 🤔
+
+- Call Hooks at the "Top Level"
+  - Don’t call Hooks inside loops, conditions, or nested functions
+
+    ```jsx
+  // 🔴 We're breaking the first rule by using a Hook in a condition
+  if (name !== '') {
+    useEffect(function persistForm() {
+      localStorage.setItem('formData', name);
+    });
+  }
+```
+
+---
+
+export default Section
+
+# Rules of Hooks #2 : grimacing:
+
+- Only Call Hooks from React Functions
+  - Call Hooks from React function components
+  - Call Hooks from "Custom Hooks"
+
+---

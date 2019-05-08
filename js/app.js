@@ -118,12 +118,29 @@ function useFormTextInput(initialValue, className, submit, cancel) {
   }
 }
 
+function useCheckbox(initialValue) {
+  const [checked, setCheckedValue] = React.useState(initialValue);
+  const check = () => setCheckedValue(true);
+  const uncheck = () => setCheckedValue(false);
+  return [checked, { check, uncheck }];
+}
+
+function useToggle(initialValue) {
+  console.log('useToggle', initialValue);
+  const [toggleValue, setToggleValue] = React.useState(initialValue);
+  const toggler = () => setToggleValue(!toggleValue);
+  return [toggleValue, toggler];
+}
+
 function useFormCheckboxInput(initialValue, callback) {
 
-  const [value, setValue] = React.useState(initialValue);
+  // const [value, setValue] = React.useState(initialValue);
+  // const toggler = useCallback(() => setValue(!value));
+  const [value, toggle] = useToggle(initialValue);
+  console.log('test', value)
 
-  function handleChange(e) {
-    setValue(!value);
+  function handleChange() {
+    toggle();
     runCallback(callback, value);
   }
 
@@ -160,6 +177,8 @@ const MainSection = ({ state, dispatch }) => {
 
 const Item = ({ item, dispatch }) => {
   const { key } = item;
+  const [editable, editableActions] = useCheckbox(false);
+
   const removeItem = () => {
     dispatch({ type: actions.REMOVE_ITEM, value: item });
   }
@@ -168,24 +187,21 @@ const Item = ({ item, dispatch }) => {
   }
   const submitItem = (itemValue) => {
     dispatch({ type: actions.UPDATE_ITEM, value: { ...item, value: itemValue } });
-    setEditing(false);
+    editableActions.uncheck();
   }
-  const setEditable = () => setEditing(true);
-  const clearEditable = () => setEditing(false);
 
-  const [editing, setEditing] = React.useState();
   const checkbox = useFormCheckboxInput(item.completed, toggleCompleted);
-  const todoItem = useFormTextInput(item.value, 'edit', submitItem, clearEditable);
+  const todoItem = useFormTextInput(item.value, 'edit', submitItem, editableActions.uncheck);
   const rowClassNames = [
     'todo',
     checkbox.checked && 'completed',
-    editing && 'editing'
+    editable && 'editing'
   ].filter(Boolean).join(' ');
 
   return e('li', { className: rowClassNames }, [
     e('div', { key: `${key}-div`, className: 'view' }, [
       e('input', { key: `${key}-checkbox`, ...checkbox }),
-      e('label', { key: `${key}-label`, onDoubleClick: setEditable }, todoItem.value),
+      e('label', { key: `${key}-label`, onDoubleClick: editableActions.check }, todoItem.value),
       e('button', { key: `${key}-button`, className: 'destroy', onClick: removeItem }),
     ]),
     e('input', { key: `${key}-input`, ...todoItem })
@@ -196,9 +212,11 @@ const Footer = ({ state: { items, filter }, dispatch }) => {
   const filterItems = filters.map(item => FilterItem({ ...item, filter, dispatch }));
 
   return e('footer', { className: 'footer', id: 'footer' }, [
-    e('span', { key: uuid(), className: 'todo-count' }, [e('strong', { key: uuid() }, items.length), '\u00a0item left']),
-    e('ul', { key: uuid(), className: 'filters' }, filterItems),
-    e('button', { key: uuid(), className: 'clear-completed' }, 'Clear completed')
+    e('span', { key: 'footer-span', className: 'todo-count' }, [
+      e('strong', { key: 'footer-span-strong' }, items.length), '\u00a0item left'
+    ]),
+    e('ul', { key: 'footer-list', className: 'filters' }, filterItems),
+    e('button', { key: 'footer-button', className: 'clear-completed' }, 'Clear completed')
   ]);
 };
 
@@ -209,7 +227,7 @@ const FilterItem = ({ href, label, filter, dispatch }) => {
   const home = !filter.href;
   const selected = (home && label === 'All') || filter.href === href;
   const item = e('a', { className: selected ? 'selected' : '', href, onClick: updateFilter }, label);
-  return e('li', { key: uuid() }, item);
+  return e('li', { key: `filter-item-${href}` }, item);
 };
 
 const App = () => {
